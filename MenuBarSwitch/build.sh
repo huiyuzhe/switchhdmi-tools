@@ -6,12 +6,19 @@
 #   APP_OUT       输出的 .app 路径（默认仓库根目录 HDMISwitch.app）
 #   SKIP_INSTALL  1=跳过同步 /Applications（release.sh 分架构打包时用）
 set -e
+ORIG_PWD="$PWD"
 cd "$(dirname "$0")"
 
 ROOT="$(cd .. && pwd)"
 APP_ARCH="${APP_ARCH:-universal}"
 APP_OUT="${APP_OUT:-$ROOT/HDMISwitch.app}"
 SKIP_INSTALL="${SKIP_INSTALL:-0}"
+
+# 相对路径的 APP_OUT 相对调用方目录解析（build.sh 内部会 cd，需提前转绝对路径）
+case "$APP_OUT" in
+  /*) ;;
+  *) APP_OUT="$ORIG_PWD/${APP_OUT#./}" ;;
+esac
 ICONSET_DIR="./AppIcon.iconset"
 
 rm -rf "$APP_OUT" "$ICONSET_DIR"

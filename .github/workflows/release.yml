@@ -77,8 +77,9 @@ jobs:
         run: |
           FILES=$(find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \))
           echo "上传文件: $FILES"
-          (cd $(dirname $FILES | head -1) && sha256sum $(basename -a $FILES) > SHA256SUMS.txt)
-          FILES="$FILES $(dirname $FILES | head -1)/SHA256SUMS.txt"
+          find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec sha256sum {} + \
+            | sed 's|artifacts/[^/]*/||' > artifacts/SHA256SUMS.txt
+          FILES="$FILES artifacts/SHA256SUMS.txt"
           gh release create "$GITHUB_REF_NAME" \
             --repo "$GITHUB_REPOSITORY" \
             --title "$GITHUB_REF_NAME" \
