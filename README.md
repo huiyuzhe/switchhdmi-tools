@@ -41,7 +41,7 @@ lets that machine "switch away"; the next machine switches you back.
 ### Download a prebuilt package
 
 Grab the package for your platform from
-[Releases](https://github.com/your-username/changehdmi-tools/releases) (zip / tar.gz,
+[Releases](https://github.com/huiyuzhe/switchhdmi-tools/releases) (zip / tar.gz,
 SHA256 checksums included):
 
 | Package | Contents |
@@ -92,7 +92,7 @@ tar xzf HDMISwitch-*-Linux.tar.gz
 ### Build the macOS app
 
 ```bash
-git clone https://github.com/your-username/changehdmi-tools.git
+git clone https://github.com/huiyuzhe/switchhdmi-tools.git
 cd changehdmi-tools
 ./MenuBarSwitch/build.sh
 ```

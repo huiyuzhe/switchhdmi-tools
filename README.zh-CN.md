@@ -37,7 +37,7 @@
 
 ### 下载预编译包
 
-到 [Releases](https://github.com/your-username/changehdmi-tools/releases) 下载对应平台的包
+到 [Releases](https://github.com/huiyuzhe/switchhdmi-tools/releases) 下载对应平台的包
 （zip / tar.gz，附 SHA256 校验和）：
 
 | 包 | 内容 |
@@ -88,7 +88,7 @@ tar xzf HDMISwitch-*-Linux.tar.gz
 ### 编译 macOS 应用
 
 ```bash
-git clone https://github.com/your-username/changehdmi-tools.git
+git clone https://github.com/huiyuzhe/switchhdmi-tools.git
 cd changehdmi-tools
 ./MenuBarSwitch/build.sh
 ```
