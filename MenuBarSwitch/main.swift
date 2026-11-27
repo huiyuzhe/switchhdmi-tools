@@ -173,7 +173,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DispatchQueue.global().async { [weak self] in
             guard let self else { return }
             let output = runScript(args: ["current"]).trimmingCharacters(in: .whitespacesAndNewlines)
-            let code = output.isEmpty ? nil : output
+            // 只接受纯数字结果，过滤脚本误打到 stdout 的错误信息
+            let code = (!output.isEmpty && output.allSatisfy { $0.isNumber }) ? output : nil
             DispatchQueue.main.async {
                 self.readingCurrent = false
                 self.currentCode = code

@@ -63,9 +63,13 @@ sips -z 512 512   icon_1024.png --out "$ICONSET_DIR/icon_512x512.png"    >/dev/n
 sips -z 1024 1024 icon_1024.png --out "$ICONSET_DIR/icon_512x512@2x.png" >/dev/null
 iconutil -c icns "$ICONSET_DIR" -o "$APP_OUT/Contents/Resources/AppIcon.icns"
 
-# 3. 拷贝切换脚本
+# 3. 拷贝切换脚本 + 内置 m1ddc（免安装，universal）
 cp "$ROOT/switch_hdmi.sh" "$APP_OUT/Contents/Resources/switch_hdmi.sh"
 chmod +x "$APP_OUT/Contents/Resources/switch_hdmi.sh"
+if [ -f "$ROOT/vendor/m1ddc" ]; then
+  cp "$ROOT/vendor/m1ddc" "$APP_OUT/Contents/Resources/m1ddc"
+  chmod +x "$APP_OUT/Contents/Resources/m1ddc"
+fi
 
 # 4. Windows 托盘图标 PNG（与 make_icon 同源，跨平台共用）
 if [ -d "$ROOT/windows" ]; then

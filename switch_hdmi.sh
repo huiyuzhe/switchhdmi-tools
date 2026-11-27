@@ -7,11 +7,23 @@
 #   status  人类可读的当前输入源
 #   <代码>  直接切到指定输入源
 
-# 自动选择 DDC 工具: macOS 优先 m1ddc，Intel Mac 备选 ddcctl，Linux 用 ddcutil
-M1DDC="/opt/homebrew/bin/m1ddc"
+# 自动选择 DDC 工具: 优先用 App 内置的 m1ddc（免安装），其次系统安装的
+# macOS 备选 ddcctl，Linux 用 ddcutil
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE_FILE="$HOME/.hdmi_switch_state"
-if [ -x "$M1DDC" ]; then
+
+M1DDC_BUNDLED="$SCRIPT_DIR/m1ddc"
+if [ -f "$M1DDC_BUNDLED" ]; then
+  # 从 U 盘/移动硬盘拷贝可能丢执行权限，尝试修复
+  chmod +x "$M1DDC_BUNDLED" 2>/dev/null || true
+fi
+
+if [ -x "$M1DDC_BUNDLED" ]; then
   DDC_TOOL=m1ddc
+  M1DDC="$M1DDC_BUNDLED"
+elif [ -x /opt/homebrew/bin/m1ddc ]; then
+  DDC_TOOL=m1ddc
+  M1DDC=/opt/homebrew/bin/m1ddc
 elif command -v m1ddc >/dev/null 2>&1; then
   DDC_TOOL=m1ddc
   M1DDC=$(command -v m1ddc)
@@ -21,7 +33,7 @@ elif command -v ddcctl >/dev/null 2>&1; then
 elif command -v ddcutil >/dev/null 2>&1; then
   DDC_TOOL=ddcutil
 else
-  echo "未找到 DDC 工具: macOS 请 brew install m1ddc（或 ddcctl），Linux 请安装 ddcutil"
+  echo "未找到 DDC 工具: macOS 请 brew install m1ddc（或 ddcctl），Linux 请安装 ddcutil" >&2
   exit 1
 fi
 

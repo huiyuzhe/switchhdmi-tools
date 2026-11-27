@@ -2,7 +2,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue)]()
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.3.0-orange)](VERSION)
+[![Version](https://img.shields.io/badge/version-1.4.0-orange)](VERSION)
 
 **English** | [简体中文](README.zh-CN.md)
 
@@ -19,7 +19,8 @@ Works over the standard **DDC/CI** protocol — no vendor drivers needed.
 - **Cross-platform** — identical CLI and UI behavior on macOS, Windows, Linux
 - **Universal macOS binary** — Apple Silicon + Intel, built-in app icon
 - **Zero third-party dependencies** — Windows uses the native DDC/CI API;
-  macOS uses `m1ddc` (or `ddcctl`); Linux uses `ddcutil`
+  macOS **bundles `m1ddc`** (no install needed, falls back to system `ddcctl`);
+  Linux uses `ddcutil`
 - **Robust** — retries on flaky DDC reads, 5s timeout protection, state-file fallback
 - **Launch at login** — built-in toggle in the menu (macOS: SMAppService, Windows: Run registry key)
 - **Bilingual UI** — English / 简体中文 (follows system language by default, switchable in the menu)
@@ -55,12 +56,13 @@ SHA256 checksums included):
 ### macOS
 
 ```bash
-brew install m1ddc            # Intel Mac fallback: brew install ddcctl
 unzip HDMISwitch-*-macOS-AppleSilicon.zip   # Intel Macs: -macOS-Intel.zip
 mv HDMISwitch-macOS-AppleSilicon/HDMISwitch.app /Applications
 chmod +x /Applications/HDMISwitch.app/Contents/MacOS/HDMISwitch
 open /Applications/HDMISwitch.app
 ```
+
+`m1ddc` is bundled inside the app — nothing else to install.
 
 A `⇄` icon appears in the menu bar. First launch: right-click → Open if
 Gatekeeper complains, or run `xattr -cr HDMISwitch.app`.
@@ -87,7 +89,7 @@ tar xzf HDMISwitch-*-Linux.tar.gz
 
 | Platform | Requires |
 |---|---|
-| macOS | Xcode Command Line Tools (`xcode-select --install`), `brew install m1ddc` |
+| macOS | Xcode Command Line Tools (`xcode-select --install`) |
 | Windows | Nothing to build — scripts run as-is |
 | Linux | Nothing to build |
 
@@ -182,6 +184,11 @@ Each machine can customize labels to taste (e.g. write which computer is on whic
 
 Issues and PRs welcome. Key areas: Windows tray polish, multi-monitor support,
 auto-detecting input codes, translations.
+
+## Credits
+
+The macOS app bundles [m1ddc](https://github.com/waydabber/m1ddc) by waydabber
+(MIT license, see [vendor/m1ddc-LICENSE](vendor/m1ddc-LICENSE)).
 
 ## License
 
