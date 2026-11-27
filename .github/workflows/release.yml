@@ -1,0 +1,76 @@
+name: Release
+
+# 推送 v* 标签时自动打包三平台发布包并创建 GitHub Release
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build universal app
+        run: ./MenuBarSwitch/build.sh
+
+      - name: Package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p release stage/HDMISwitch-macOS
+          cp -R HDMISwitch.app stage/HDMISwitch-macOS/
+          cp README.md README.zh-CN.md LICENSE stage/HDMISwitch-macOS/
+          ditto -c -k --sequesterRsrc --keepParent stage/HDMISwitch-macOS \
+            "release/HDMISwitch-${VERSION}-macOS.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: release/*.zip
+
+  windows-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package Windows & Linux
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p release stage/HDMISwitch-Windows stage/HDMISwitch-Linux
+          cp windows/switch_hdmi.ps1 windows/HDMISwitch-Tray.ps1 windows/HDMISwitch.bat windows/HDMISwitch.png \
+             stage/HDMISwitch-Windows/
+          cp README.md README.zh-CN.md LICENSE stage/HDMISwitch-Windows/
+          cp switch_hdmi.sh stage/HDMISwitch-Linux/
+          chmod +x stage/HDMISwitch-Linux/switch_hdmi.sh
+          cp README.md README.zh-CN.md LICENSE stage/HDMISwitch-Linux/
+          cd stage
+          zip -r "../release/HDMISwitch-${VERSION}-Windows.zip" HDMISwitch-Windows
+          tar -czf "../release/HDMISwitch-${VERSION}-Linux.tar.gz" HDMISwitch-Linux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-linux
+          path: release/*
+
+  publish:
+    needs: [macos, windows-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd artifacts/*/
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            *.*

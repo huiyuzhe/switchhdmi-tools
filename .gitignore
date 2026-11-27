@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Build artifacts (rebuild with MenuBarSwitch/build.sh)
+HDMISwitch.app/
+MenuBarSwitch/AppIcon.iconset/
+MenuBarSwitch/icon_1024.png
+
+# Release packages (create with ./release.sh)
+release/
+
+# Editor
+*.swp
+.idea/
+.vscode/
