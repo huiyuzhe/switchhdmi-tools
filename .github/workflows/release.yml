@@ -21,11 +21,18 @@ jobs:
       - name: Package
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          mkdir -p release stage/HDMISwitch-macOS
-          cp -R HDMISwitch.app stage/HDMISwitch-macOS/
-          cp README.md README.zh-CN.md LICENSE stage/HDMISwitch-macOS/
-          ditto -c -k --sequesterRsrc --keepParent stage/HDMISwitch-macOS \
-            "release/HDMISwitch-${VERSION}-macOS.zip"
+          mkdir -p release
+          package_arch() {
+            local arch="$1" name="$2"
+            SKIP_INSTALL=1 APP_ARCH="$arch" APP_OUT="stage/mac-$arch/HDMISwitch.app" ./MenuBarSwitch/build.sh >/dev/null
+            mkdir -p "stage/HDMISwitch-macOS-$name"
+            cp -R "stage/mac-$arch/HDMISwitch.app" "stage/HDMISwitch-macOS-$name/"
+            cp README.md README.zh-CN.md LICENSE "stage/HDMISwitch-macOS-$name/"
+            ditto -c -k --sequesterRsrc --keepParent "stage/HDMISwitch-macOS-$name" \
+              "release/HDMISwitch-${VERSION}-macOS-$name.zip"
+          }
+          package_arch arm64 AppleSilicon
+          package_arch x86_64 Intel
 
       - uses: actions/upload-artifact@v4
         with:
@@ -70,6 +77,8 @@ jobs:
         run: |
           FILES=$(find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \))
           echo "上传文件: $FILES"
+          (cd $(dirname $FILES | head -1) && sha256sum $(basename -a $FILES) > SHA256SUMS.txt)
+          FILES="$FILES $(dirname $FILES | head -1)/SHA256SUMS.txt"
           gh release create "$GITHUB_REF_NAME" \
             --repo "$GITHUB_REPOSITORY" \
             --title "$GITHUB_REF_NAME" \

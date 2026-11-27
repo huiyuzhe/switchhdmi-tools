@@ -1,9 +1,10 @@
 #!/bin/bash
-# 多平台打包脚本：生成 release/ 目录下的三平台发布包 + SHA256SUMS.txt
+# 多平台打包脚本：生成 release/ 目录下的发布包 + SHA256SUMS.txt
 # 用法: ./release.sh
-#   macOS   → HDMISwitch-<版本>-macOS.zip   (universal App + 文档)
-#   Windows → HDMISwitch-<版本>-Windows.zip (PowerShell 托盘应用 + 文档)
-#   Linux   → HDMISwitch-<版本>-Linux.tar.gz(核心脚本 + 文档)
+#   macOS(Apple Silicon) → HDMISwitch-<版本>-macOS-AppleSilicon.zip (arm64 App + 文档)
+#   macOS(Intel)         → HDMISwitch-<版本>-macOS-Intel.zip        (x86_64 App + 文档)
+#   Windows              → HDMISwitch-<版本>-Windows.zip            (PowerShell 托盘应用 + 文档)
+#   Linux                → HDMISwitch-<版本>-Linux.tar.gz           (核心脚本 + 文档)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -16,19 +17,23 @@ copy_docs() {
   cp README.md README.zh-CN.md LICENSE "$1/"
 }
 
-echo "==> 构建 macOS universal App"
-./MenuBarSwitch/build.sh >/dev/null
-[ -d HDMISwitch.app ] || { echo "构建失败"; exit 1; }
+package_macos() {
+  local arch="$1" name="$2"
+  echo "==> 构建 macOS $arch App"
+  SKIP_INSTALL=1 APP_ARCH="$arch" APP_OUT="$STAGE/mac-$arch/HDMISwitch.app" ./MenuBarSwitch/build.sh >/dev/null
+  echo "==> 打包 macOS $name"
+  mkdir -p "$STAGE/HDMISwitch-macOS-$name"
+  cp -R "$STAGE/mac-$arch/HDMISwitch.app" "$STAGE/HDMISwitch-macOS-$name/"
+  copy_docs "$STAGE/HDMISwitch-macOS-$name"
+  ditto -c -k --sequesterRsrc --keepParent \
+    "$STAGE/HDMISwitch-macOS-$name" "$OUT/HDMISwitch-$VERSION-macOS-$name.zip"
+}
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
 
-echo "==> 打包 macOS"
-mkdir -p "$STAGE/HDMISwitch-macOS"
-cp -R HDMISwitch.app "$STAGE/HDMISwitch-macOS/"
-copy_docs "$STAGE/HDMISwitch-macOS"
-ditto -c -k --sequesterRsrc --keepParent \
-  "$STAGE/HDMISwitch-macOS" "$OUT/HDMISwitch-$VERSION-macOS.zip"
+package_macos arm64 "AppleSilicon"
+package_macos x86_64 "Intel"
 
 echo "==> 打包 Windows"
 mkdir -p "$STAGE/HDMISwitch-Windows"

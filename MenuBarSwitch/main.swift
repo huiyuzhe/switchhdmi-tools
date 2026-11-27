@@ -4,9 +4,39 @@ import ServiceManagement
 // 菜单栏一键切换显示器输入源的小应用（LSUIElement，无 Dock 图标）
 // 切换逻辑全部在 Resources/switch_hdmi.sh 中，本应用只负责界面与调用
 //
-// 重要设计约束：菜单结构在启动时一次性构建（输入源列表加载后插入一次），
-// 之后只"原地"更新标题/勾选状态，绝不在菜单打开期间增删条目，
-// 否则 NSMenu 跟踪会立即关闭，表现为"点击没反应"。
+// 设计约束：
+// 1. 菜单结构启动时一次性构建，之后只"原地"更新标题/勾选，
+//    绝不在菜单打开期间增删条目（否则 NSMenu 跟踪立即关闭）
+// 2. 界面语言支持跟随系统/中文/English，UserDefaults 持久化
+
+// ---------- 多语言 ----------
+enum UiLanguage: String {
+    case system = "system"
+    case zh = "zh"
+    case en = "en"
+}
+
+var uiLanguage: UiLanguage {
+    get {
+        UiLanguage(rawValue: UserDefaults.standard.string(forKey: "app_language") ?? "") ?? .system
+    }
+    set {
+        UserDefaults.standard.set(newValue.rawValue, forKey: "app_language")
+    }
+}
+
+private func isSystemChinese() -> Bool {
+    (Locale.preferredLanguages.first ?? "en").hasPrefix("zh")
+}
+
+/// 翻译：按当前语言设置返回中文或英文文案
+func tr(_ zh: String, _ en: String) -> String {
+    switch uiLanguage {
+    case .zh: return zh
+    case .en: return en
+    case .system: return isSystemChinese() ? zh : en
+    }
+}
 
 struct InputSource {
     let code: String
@@ -19,6 +49,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var toggleItem: NSMenuItem!
     private var statusRow: NSMenuItem!
     private var loginItem: NSMenuItem!
+    private var quitItem: NSMenuItem!
+    private var langItems: [NSMenuItem] = []   // 0=system 1=zh 2=en
     private var inputRows: [NSMenuItem] = []
     private var inputs: [InputSource] = []
     private var currentCode: String?
@@ -27,7 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ note: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            if let img = NSImage(systemSymbolName: "arrow.left.arrow.right", accessibilityDescription: "HDMI 切换") {
+            if let img = NSImage(systemSymbolName: "arrow.left.arrow.right", accessibilityDescription: "HDMI Switch") {
                 button.image = img
             } else {
                 button.title = "⇄"
@@ -37,29 +69,76 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.autoenablesItems = false
         menu.delegate = self
 
-        toggleItem = NSMenuItem(title: "一键切换", action: #selector(toggleInput(_:)), keyEquivalent: "")
+        toggleItem = NSMenuItem(title: tr("一键切换", "One-click Switch"), action: #selector(toggleInput(_:)), keyEquivalent: "")
         toggleItem.target = self
         toggleItem.isEnabled = true
         menu.addItem(toggleItem)
 
-        statusRow = NSMenuItem(title: "当前输入: 读取中…", action: nil, keyEquivalent: "")
+        statusRow = NSMenuItem(title: tr("当前输入: 读取中…", "Current input: reading…"), action: nil, keyEquivalent: "")
         statusRow.isEnabled = false
         menu.addItem(statusRow)
 
         menu.addItem(.separator())
 
-        loginItem = NSMenuItem(title: "开机自启", action: #selector(toggleLogin(_:)), keyEquivalent: "")
+        loginItem = NSMenuItem(title: tr("开机自启", "Launch at Login"), action: #selector(toggleLogin(_:)), keyEquivalent: "")
         loginItem.target = self
         menu.addItem(loginItem)
 
+        // 语言子菜单
+        let langRow = NSMenuItem(title: tr("语言 Language", "Language / 语言"), action: nil, keyEquivalent: "")
+        let langMenu = NSMenu()
+        let options: [(UiLanguage, String)] = [
+            (.system, tr("跟随系统 / System", "System / 系统")),
+            (.zh, "中文"),
+            (.en, "English"),
+        ]
+        for (option, title) in options {
+            let item = NSMenuItem(title: title, action: #selector(setLanguage(_:)), keyEquivalent: "")
+            item.target = self
+            item.isEnabled = true
+            item.representedObject = option.rawValue
+            langMenu.addItem(item)
+            langItems.append(item)
+        }
+        langRow.submenu = langMenu
+        menu.addItem(langRow)
+        refreshLanguageChecks()
+
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "退出", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        quitItem = NSMenuItem(title: tr("退出", "Quit"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(quitItem)
 
         statusItem.menu = menu
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
 
         refreshInputs()
         refreshCurrent()
+    }
+
+    // MARK: - 语言切换（原地更新文案，不改菜单结构）
+
+    private func refreshLanguageChecks() {
+        let current = uiLanguage
+        for (i, item) in langItems.enumerated() {
+            let option = UiLanguage(rawValue: item.representedObject as? String ?? "") ?? .system
+            _ = i
+            item.state = option == current ? .on : .off
+        }
+    }
+
+    private func applyLanguage() {
+        toggleItem.title = tr("一键切换", "One-click Switch")
+        loginItem.title = tr("开机自启", "Launch at Login")
+        quitItem.title = tr("退出", "Quit")
+        refreshLanguageChecks()
+        updateCurrentDisplay()
+    }
+
+    @objc private func setLanguage(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let lang = UiLanguage(rawValue: raw) else { return }
+        uiLanguage = lang
+        applyLanguage()
     }
 
     // MARK: - 菜单：只做原地刷新，不改结构
@@ -123,12 +202,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func updateCurrentDisplay() {
         let text: String
         if readingCurrent {
-            text = "当前输入: 读取中…"
+            text = tr("当前输入: 读取中…", "Current input: reading…")
         } else if let code = currentCode {
-            let label = inputs.first(where: { $0.code == code })?.label ?? "输入 \(code)"
-            text = "当前输入: \(label)"
+            let label = inputs.first(where: { $0.code == code })?.label ?? tr("输入 \(code)", "Input \(code)")
+            text = tr("当前输入: ", "Current input: ") + label
         } else {
-            text = "当前输入: 读取失败"
+            text = tr("当前输入: 读取失败", "Current input: read failed")
         }
         statusRow.title = text
         for row in inputRows {
@@ -163,7 +242,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         } catch {
             let alert = NSAlert()
-            alert.messageText = "设置开机自启失败"
+            alert.messageText = tr("设置开机自启失败", "Failed to set Launch at Login")
             alert.informativeText = error.localizedDescription
             alert.runModal()
         }

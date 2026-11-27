@@ -2,7 +2,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue)]()
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.0-orange)](VERSION)
+[![Version](https://img.shields.io/badge/version-1.3.0-orange)](VERSION)
 
 [English](README.md) | **简体中文**
 
@@ -20,6 +20,7 @@
 - **零第三方依赖** — Windows 用系统原生 DDC/CI API；macOS 用 `m1ddc`（备选 `ddcctl`）；Linux 用 `ddcutil`
 - **健壮性** — DDC 读取失败自动重试、5 秒超时保护、状态文件兜底
 - **开机自启** — 菜单内直接勾选（macOS: SMAppService，Windows: 注册表 Run 键）
+- **界面双语** — 简体中文 / English（默认跟随系统语言，菜单里可切换）
 
 ## 工作原理
 
@@ -42,7 +43,8 @@
 
 | 包 | 内容 |
 |---|---|
-| `HDMISwitch-x.y.z-macOS.zip` | Universal `HDMISwitch.app`（arm64 + x86_64） |
+| `HDMISwitch-x.y.z-macOS-AppleSilicon.zip` | Apple Silicon（M1–M4）版 `HDMISwitch.app` |
+| `HDMISwitch-x.y.z-macOS-Intel.zip` | Intel 芯片 Mac 版 `HDMISwitch.app` |
 | `HDMISwitch-x.y.z-Windows.zip` | PowerShell 脚本 + 托盘应用 + 启动器 |
 | `HDMISwitch-x.y.z-Linux.tar.gz` | `switch_hdmi.sh` |
 
@@ -50,8 +52,8 @@
 
 ```bash
 brew install m1ddc            # Intel Mac 装不上就改用: brew install ddcctl
-unzip HDMISwitch-*-macOS.zip
-mv HDMISwitch-macOS/HDMISwitch.app /Applications
+unzip HDMISwitch-*-macOS-AppleSilicon.zip   # Intel 芯片的 Mac 用 -macOS-Intel.zip
+mv HDMISwitch-macOS-AppleSilicon/HDMISwitch.app /Applications
 chmod +x /Applications/HDMISwitch.app/Contents/MacOS/HDMISwitch
 open /Applications/HDMISwitch.app
 ```

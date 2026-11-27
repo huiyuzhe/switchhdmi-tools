@@ -2,7 +2,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue)]()
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.0-orange)](VERSION)
+[![Version](https://img.shields.io/badge/version-1.3.0-orange)](VERSION)
 
 **English** | [简体中文](README.zh-CN.md)
 
@@ -22,6 +22,7 @@ Works over the standard **DDC/CI** protocol — no vendor drivers needed.
   macOS uses `m1ddc` (or `ddcctl`); Linux uses `ddcutil`
 - **Robust** — retries on flaky DDC reads, 5s timeout protection, state-file fallback
 - **Launch at login** — built-in toggle in the menu (macOS: SMAppService, Windows: Run registry key)
+- **Bilingual UI** — English / 简体中文 (follows system language by default, switchable in the menu)
 
 ## How it works
 
@@ -46,7 +47,8 @@ SHA256 checksums included):
 
 | Package | Contents |
 |---|---|
-| `HDMISwitch-x.y.z-macOS.zip` | Universal `HDMISwitch.app` (arm64 + x86_64) |
+| `HDMISwitch-x.y.z-macOS-AppleSilicon.zip` | `HDMISwitch.app` for Apple Silicon (M1–M4) |
+| `HDMISwitch-x.y.z-macOS-Intel.zip` | `HDMISwitch.app` for Intel Macs |
 | `HDMISwitch-x.y.z-Windows.zip` | PowerShell scripts + tray app + launcher |
 | `HDMISwitch-x.y.z-Linux.tar.gz` | `switch_hdmi.sh` |
 
@@ -54,8 +56,8 @@ SHA256 checksums included):
 
 ```bash
 brew install m1ddc            # Intel Mac fallback: brew install ddcctl
-unzip HDMISwitch-*-macOS.zip
-mv HDMISwitch-macOS/HDMISwitch.app /Applications
+unzip HDMISwitch-*-macOS-AppleSilicon.zip   # Intel Macs: -macOS-Intel.zip
+mv HDMISwitch-macOS-AppleSilicon/HDMISwitch.app /Applications
 chmod +x /Applications/HDMISwitch.app/Contents/MacOS/HDMISwitch
 open /Applications/HDMISwitch.app
 ```

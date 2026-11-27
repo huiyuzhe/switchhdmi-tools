@@ -152,8 +152,8 @@ function Invoke-Switch([string]$Target) {
     return $ok
 }
 
-function Invoke-CycleSwitch {
-    # 按列表顺序循环切换，返回结果描述字符串
+function Get-NextInputCode {
+    # 按列表顺序计算下一个输入源代码（供 CLI 和托盘共用）
     $cur = Get-InputCode
     $idx = $null
     if ($null -ne $cur) {
@@ -166,11 +166,14 @@ function Invoke-CycleSwitch {
     }
     $list = Get-InputList
     if ($null -ne $idx) {
-        $next = ($idx + 1) % $list.Count
-    } else {
-        $next = 0
+        return $list[($idx + 1) % $list.Count].Code
     }
-    $target = $list[$next].Code
+    return $list[0].Code
+}
+
+function Invoke-CycleSwitch {
+    # 按列表顺序循环切换，返回结果描述字符串
+    $target = Get-NextInputCode
     if (Invoke-Switch $target) {
         return "已切换到 " + (Get-Label $target)
     }
